@@ -3,25 +3,25 @@ import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 export class CreatePropertyDto {
   @IsNotEmpty()
   @IsString()
-  readonly name: string;
+  name: string;
 
   @IsNotEmpty()
   @IsUrl()
-  readonly apartmentListUrl: string;
+  apartmentListUrl: string;
 
   @IsOptional()
   @IsString()
-  readonly multimediaPath?: string;
+  multimediaPath?: string;
 
   @IsNotEmpty()
   @IsString()
-  readonly propertyEmail: string;
+  propertyEmail: string;
 
   @IsNotEmpty()
   @IsString()
-  readonly typeOfBuilding: string;
+  typeOfBuilding: string;
 
   @IsOptional()
   @IsString()
-  readonly status?: string;
+  status?: string;
 }

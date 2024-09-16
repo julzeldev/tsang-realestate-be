@@ -10,7 +10,30 @@ export class PropertiesService {
     @InjectModel(Property.name) private propertyModel: Model<PropertyDocument>,
   ) {}
 
-  // Create a new property
+  // Add or update a property based on a unique field (e.g., apartmentListUrl)
+  async addOrUpdateProperty(
+    createPropertyDto: CreatePropertyDto,
+  ): Promise<Property> {
+    // Check if a property already exists based on the unique field apartmentListUrl
+    const existingProperty = await this.propertyModel.findOne({
+      apartmentListUrl: createPropertyDto.apartmentListUrl,
+    });
+
+    if (existingProperty) {
+      // If the property exists, update it
+      return this.propertyModel
+        .findOneAndUpdate({ _id: existingProperty._id }, createPropertyDto, {
+          new: true,
+        })
+        .exec();
+    } else {
+      // If the property does not exist, create a new one
+      const newProperty = new this.propertyModel(createPropertyDto);
+      return newProperty.save();
+    }
+  }
+
+  // Create a new property (no update logic, just for manual creation)
   async create(createPropertyDto: CreatePropertyDto): Promise<Property> {
     const newProperty = new this.propertyModel(createPropertyDto);
     return newProperty.save();
