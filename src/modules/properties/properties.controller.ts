@@ -1,5 +1,6 @@
 import {
   Controller,
+  Res,
   Get,
   Post,
   Body,
@@ -13,6 +14,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { validateOrReject } from 'class-validator';
 import { parse } from 'csv-parse';
+import { Response } from 'express';
+import * as fastcsv from 'fast-csv';
 import * as multer from 'multer';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/properties-create.dto';
@@ -31,6 +34,58 @@ export class PropertiesController {
   @Get()
   async findAll() {
     return this.propertiesService.findAll();
+  }
+
+  @Get('download')
+  async downloadCsv(@Res() res: Response) {
+    const properties = await this.propertiesService.findAll();
+
+    // Define CSV headers
+    const csvHeaders = [
+      'Name',
+      'Apartment List URL',
+      'Multimedia Path',
+      'Property Email',
+      'Type of Building',
+      'Property Status',
+    ];
+
+    // Set headers for the response
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=properties.csv');
+
+    // Create CSV stream
+    const csvStream = fastcsv.format({ headers: csvHeaders });
+
+    // Write the properties data to the CSV stream
+    properties.forEach((property) => {
+      csvStream.write({
+        Name: property.name,
+        'Apartment List URL': property.apartmentListUrl,
+        'Multimedia Path': property.multimediaPath || '',
+        'Property Email': property.propertyEmail || '',
+        'Type of Building': property.typeOfBuilding || '',
+        'Property Status': property.status || '',
+      });
+    });
+
+    // End the stream
+    csvStream.end();
+
+    // Ensure the stream finishes piping to the response
+    csvStream
+      .pipe(res)
+      .on('finish', () => {
+        res.end(); // Ensure the response is properly finalized after the stream finishes
+      })
+      .on('error', (error) => {
+        if (error instanceof Error) {
+          console.error('Error generating CSV file:', error.message);
+        } else {
+          console.error('Error generating CSV file');
+        }
+        res.status(500).send('Error generating CSV file');
+      });
   }
 
   // Get a single property by ID

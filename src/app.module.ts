@@ -5,9 +5,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 // import { JwtAuthGuard } from './auth/jwt-auth.guard';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
-import { PropertiesModule } from './properties/properties.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UserModule } from './modules/user/user.module';
+import { PropertiesModule } from './modules/properties/properties.module';
+import { PropertyScraperModule } from './modules/property-scraper/propertyScraper.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PropertiesModule } from './properties/properties.module';
     AuthModule,
     UserModule,
     PropertiesModule,
+    PropertyScraperModule,
   ],
   controllers: [AppController],
   providers: [
