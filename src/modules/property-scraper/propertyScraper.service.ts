@@ -20,6 +20,7 @@ import { CronJob, CronTime } from 'cron';
 @Injectable()
 export class PropertyScraperService {
   private readonly logger = new Logger(PropertyScraperService.name);
+  private currentFrequency: string = CronExpression.EVERY_DAY_AT_MIDNIGHT; // Default frequency
 
   constructor(
     @InjectModel(Property.name)
@@ -76,7 +77,7 @@ export class PropertyScraperService {
   async fetchAllList(): Promise<PropertyDocument[]> {
     try {
       const allList = await this.propertyModel
-        .find({}, { title: 1, destinationURL: 1 })
+        .find({}, { title: 1, apartmentListUrl: 1 })
         .lean();
       return allList;
     } catch (error) {
@@ -108,7 +109,10 @@ export class PropertyScraperService {
    */
   async scrapeApartmentListPropertyByURL(url: string): Promise<void> {
     try {
-      const updatedInfo: any = { lastScrapeStatus: ScrapeStatus.None };
+      const updatedInfo: any = {
+        lastScrapeStatus: ScrapeStatus.None,
+        lastScrapedDate: new Date(),
+      };
       const { html, status } = await this.getPageHtml(url);
       if (status !== '200') {
         updatedInfo.lastScrapeStatus = ScrapeStatus.Failed;
@@ -121,7 +125,7 @@ export class PropertyScraperService {
       updatedInfo.lastScrapeStatus = ScrapeStatus.Success;
       Object.assign(updatedInfo, { information: propertyInformation });
       await this.scrapedPropertyModel.findOneAndUpdate(
-        { destinationURL: url },
+        { apartmentListUrl: url },
         updatedInfo,
         { upsert: true, new: true },
       );
@@ -207,6 +211,40 @@ export class PropertyScraperService {
   }
 
   /**
+   * Gets the scraping logs from the database.
+   * @returns A promise that resolves to an array of scraping logs.
+   */
+  async getScrapingLogs(): Promise<any> {
+    try {
+      const logs = await this.scrapedPropertyModel
+        .find(
+          {},
+          {
+            apartmentListUrl: 1,
+            lastScrapedDate: 1,
+            lastScrapeStatus: 1,
+          },
+        )
+        .lean();
+      const frequency = this.currentFrequency;
+      const lastScrapedDate = logs[0].lastScrapedDate;
+      const totalProperties = logs.length;
+      const successCount = logs.filter(
+        (log) => log.lastScrapeStatus === ScrapeStatus.Success,
+      ).length;
+      return {
+        frequency,
+        lastScrapedDate,
+        totalProperties,
+        successCount,
+      };
+    } catch (error) {
+      this.logger.error('Error while fetching scraping logs:', error);
+      return [];
+    }
+  }
+
+  /**
    * Updates the cron schedule for the scraper.
    * @param frequency - The cron expression for the new schedule.
    */
@@ -214,6 +252,8 @@ export class PropertyScraperService {
     const job = this.schedulerRegistry.getCronJob('scraper');
     job.setTime(new CronTime(frequency));
     job.start();
+    this.currentFrequency = frequency;
     this.logger.debug(`Updated scraper schedule to: ${frequency}`);
+    return { frequency };
   }
 }

@@ -16,16 +16,24 @@ export class ScrapedProperty extends Document {
   title: string;
 
   @Prop({ required: true })
-  destinationURL: string;
+  apartmentListUrl: string;
 
   @Prop({ enum: ScrapeStatus, default: ScrapeStatus.None })
   lastScrapeStatus: ScrapeStatus;
 
   @Prop({ type: MongooseSchema.Types.Mixed })
   information: any;
+
+  // New fields for scraping log
+  @Prop({ default: 0 })
+  totalProperties: number;
+
+  @Prop({ type: Date, default: Date.now })
+  lastScrapedDate: Date;
 }
 
 export const ScrapedPropertySchema =
   SchemaFactory.createForClass(ScrapedProperty);
 
-ScrapedPropertySchema.index({ title: 1, destinationURL: 1 });
+// Adding an index for efficient querying by title and apartmentListUrl
+ScrapedPropertySchema.index({ title: 1, apartmentListUrl: 1 });
