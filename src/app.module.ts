@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { PropertiesModule } from './modules/properties/properties.module';
 import { PropertyScraperModule } from './modules/property-scraper/propertyScraper.module';
+import { ClientsModule } from './modules/clients/clients.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PropertyScraperModule } from './modules/property-scraper/propertyScrape
     UserModule,
     PropertiesModule,
     PropertyScraperModule,
+    ClientsModule,
   ],
   controllers: [AppController],
   providers: [
